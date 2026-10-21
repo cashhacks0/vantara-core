@@ -24,13 +24,13 @@ Version: 0.1.0
 | Agents | ✅ | Tool loop with calculator verified under fake runtime; approval gate verified |
 | Knowledge ingestion & RAG | ✅ | TXT upload, lexical search, real local model answer with citation |
 | Image/Audio/Video gating | ✅ | Unavailable backends return explicit 503/501 and UI stays disabled |
-| Security controls | ✅ | Path traversal, SSRF, secret encryption, rate limiting tests |
+| Security controls | ✅ | Path traversal, SSRF, secret encryption, rate limiting, optional access-token gate tests |
 | Remote provider opt-in | ✅ | Encrypted providers, explicit setting gate, explicit model ids only |
 
 ## Test matrix (executed)
 
 ```text
-backend: 45 passed  (pytest)
+backend: 46 passed  (pytest)
 frontend: 6 passed  (vitest, includes dashboard smoke render)
 frontend build: successful
 typescript strict check: successful

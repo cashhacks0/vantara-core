@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import secrets
 import logging
 import time
 import uuid
@@ -12,7 +13,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
@@ -142,6 +143,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def security_middleware(request: Request, call_next):
         request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:12]
         started = time.monotonic()
+        if settings.access_token:
+            supplied = request.cookies.get("vantara_access")
+            query_token = request.query_params.get("access")
+            authorized = bool(supplied) and secrets.compare_digest(supplied or "", settings.access_token)
+            if query_token and secrets.compare_digest(query_token, settings.access_token):
+                response = RedirectResponse(url="/", status_code=303)
+                response.set_cookie(
+                    "vantara_access", settings.access_token, max_age=7 * 24 * 3600,
+                    httponly=True, samesite="lax", path="/",
+                )
+                return response
+            if not authorized:
+                if request.url.path.startswith("/api"):
+                    return JSONResponse(
+                        {"detail": "Access token required for this deployment."},
+                        status_code=401,
+                    )
+                login = """<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>VANTARA AI — Access</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#09090b;color:#f4f4f5;font-family:system-ui,sans-serif}main{width:min(360px,90vw);padding:28px;border:1px solid #26262e;border-radius:14px;background:#101014}input{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #33333d;background:#0b0b0e;color:#fff;margin-top:10px}button{margin-top:12px;width:100%;padding:10px;border:0;border-radius:8px;background:#8b5cf6;color:#fff;font-weight:600;cursor:pointer}p{color:#8d8d99;font-size:13px;line-height:1.5}h1{font-size:15px;letter-spacing:.12em}</style>
+</head><body><main><h1>VANTARA AI</h1><p>This deployment requires an access token. Open the full link provided by the operator to continue.</p><form method="get" action="/"><input name="access" type="password" placeholder="Access token" autocomplete="current-password"><button>Open workspace</button></form></main></body></html>"""
+                return HTMLResponse(login, status_code=401)
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
             length = request.headers.get("content-length")
             if length and int(length) > settings.request_max_bytes:

@@ -51,6 +51,7 @@ class Settings:
     request_max_bytes: int = 32 * 1024 * 1024
     rate_limit_per_minute: int = 600
     version: str = "0.1.0"
+    access_token: str | None = field(default=None, repr=False)
 
     @property
     def secret_key_path(self) -> Path:
@@ -103,6 +104,7 @@ class Settings:
             rate_limit_per_minute=int(
                 os.environ.get("VANTARA_RATE_LIMIT", "600")
             ),
+            access_token=os.environ.get("VANTARA_ACCESS_TOKEN") or None,
         )
 
     def ensure_dirs(self) -> None:

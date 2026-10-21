@@ -82,7 +82,7 @@ export HF_TOKEN=hf_...
 ## Testing
 
 ```bash
-# Backend: 45 tests (API, chat streaming, workflows, agents, knowledge, security)
+# Backend: 46 tests (API, chat streaming, workflows, agents, knowledge, security)
 cd backend && ../.venv/bin/python -m pytest -q
 
 # Frontend: type check, production build, unit + smoke-render tests
@@ -105,6 +105,7 @@ Copy `.env.example` to `.env`. Key variables:
 | `HF_TOKEN` | Gated Hub access / rate limits | unset |
 | `VANTARA_ALLOW_WORKFLOW_HTTP` | Enable outbound workflow HTTP nodes | `false` |
 | `VANTARA_ALLOW_REMOTE_PROVIDERS` | Deployment-level remote hint | `false` |
+| `VANTARA_ACCESS_TOKEN` | Optional single-token gate for tunnels/LAN access | unset |
 
 Remote providers also require **Settings → Privacy → Allow remote providers** and an explicit model selection in chat. There is no automatic remote fallback.
 
@@ -118,6 +119,8 @@ Remote providers also require **Settings → Privacy → Allow remote providers*
 - No shell tool exists. Agent file access is limited to uploaded files; writes require approval.
 - Retrieved documents and model cards are treated as untrusted data in prompts.
 - Rate limiting and request size limits are enabled.
+
+`VANTARA_ACCESS_TOKEN` adds a single shared-secret gate (HTTP-only cookie set via `/?access=TOKEN`). It is suitable for temporary tunnels, **not** a replacement for multi-user authentication.
 
 **Exposing VANTARA beyond localhost is not supported out of the box.** Put it behind an authenticated reverse proxy, set an explicit CORS allowlist, and review the threat model first.
 
