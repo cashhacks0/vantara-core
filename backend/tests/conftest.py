@@ -54,6 +54,7 @@ def make_settings(tmp_path: Path) -> Settings:
         outputs_dir=data / "outputs",
         cache_dir=data / "cache",
         logs_dir=data / "logs",
+        projects_dir=data / "projects",
         hf_token=None,
         allow_workflow_http=False,
         llama_server_path=None,

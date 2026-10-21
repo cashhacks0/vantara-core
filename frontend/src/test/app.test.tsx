@@ -30,6 +30,8 @@ function mockFetch() {
     if (url.includes('/api/dashboard')) return new Response(JSON.stringify(dashboard), { status: 200 });
     if (url.includes('/api/runtimes')) return new Response(JSON.stringify({ runtimes: dashboard.runtimes }), { status: 200 });
     if (url.includes('/api/downloads')) return new Response(JSON.stringify({ downloads: [] }), { status: 200 });
+    if (url.includes('/api/projects/kinds')) return new Response(JSON.stringify({ kinds: [{ value: 'static', label: 'Website / static app' }] }), { status: 200 });
+    if (url.includes('/api/projects')) return new Response(JSON.stringify({ projects: [] }), { status: 200 });
     if (url.includes('/api/settings')) return new Response(JSON.stringify({ theme: 'dark', default_model: 'auto' }), { status: 200 });
     return new Response(JSON.stringify({}), { status: 200 });
   });
@@ -37,6 +39,13 @@ function mockFetch() {
 
 describe('VANTARA app shell', () => {
   beforeEach(() => { vi.stubGlobal('fetch', mockFetch()); });
+
+  it('renders the AI Terminal workspace without a selected project', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/terminal']}><App /></MemoryRouter></QueryClientProvider>);
+    await waitFor(() => expect(screen.getByText('No project selected')).toBeInTheDocument());
+    expect(screen.getAllByText(/AI Terminal/i).length).toBeGreaterThan(0);
+  });
 
   it('renders the dashboard with runtime health', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

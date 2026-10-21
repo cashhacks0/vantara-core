@@ -24,14 +24,21 @@ Version: 0.1.0
 | Agents | ✅ | Tool loop with calculator verified under fake runtime; approval gate verified |
 | Knowledge ingestion & RAG | ✅ | TXT upload, lexical search, real local model answer with citation |
 | Image/Audio/Video gating | ✅ | Unavailable backends return explicit 503/501 and UI stays disabled |
-| Security controls | ✅ | Path traversal, SSRF, secret encryption, rate limiting, optional access-token gate tests |
+| Security controls | ✅ | Path traversal, SSRF, secret encryption, rate limiting, optional access-token gate, project path + command allowlist tests |
+| Creator Studio | ✅ | One prompt creates a typed project (website/game/python/node/blank) and opens the AI Terminal |
+| AI Terminal file editing | ✅ | Real local-model build wrote index.html (1,023 B) and passed a real HTML structure check |
+| AI Terminal commands | ✅ | `node --check app.js` executed via the allowlist and recorded with exit code |
+| Project preview | ✅ | Sandboxed iframe route serves generated files with a restrictive CSP |
+| Checkpoints + diff | ✅ | Zip snapshots, restore, unified diffs, per-task history |
+| Project memory | ✅ | Per-project requirements/notes injected into AI context, editable and deletable |
+| Workflow factory | ✅ | Prompt → validated graph (document, knowledge, image, text) with explanations |
 | Remote provider opt-in | ✅ | Encrypted providers, explicit setting gate, explicit model ids only |
 
 ## Test matrix (executed)
 
 ```text
-backend: 46 passed  (pytest)
-frontend: 6 passed  (vitest, includes dashboard smoke render)
+backend: 59 passed  (pytest)
+frontend: 7 passed  (vitest, includes dashboard + AI Terminal smoke renders)
 frontend build: successful
 typescript strict check: successful
 ```
@@ -71,6 +78,8 @@ GET  / (built SPA) → 200 text/html; JS asset 200
 13. Image Studio exposes batch size = 1 in this release; sequential multi-image batching is not wired yet.
 
 ## Next concrete development step
+
+Per the new upgrade directive, the next step is **Phase 1 of the browser-based AI game engine**: a Projects page, a React Three Fiber editor shell (toolbar, outliner, 3D viewport, details panel, content browser), a typed JSON "game spec" with undo/redo, and IndexedDB project storage. A Diffusers image runtime adapter remains queued after that.
 
 Add a **Diffusers image runtime adapter** with capability discovery, a model-directory picker, real progress callbacks, image-to-image support, and tests using a tiny local pipeline stub. This would make Image Studio and the `image_model` workflow node functional on GPU and CPU, and complete the second example workflow without relying on the resize-only fallback.
 

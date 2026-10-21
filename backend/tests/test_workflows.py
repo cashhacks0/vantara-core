@@ -97,3 +97,26 @@ def test_workflow_crud(client):
     assert updated["name"] == "Renamed flow"
     assert client.delete(f"/api/workflows/{created['id']}").status_code == 204
     assert client.get(f"/api/workflows/{created['id']}").status_code == 404
+
+
+def test_generate_workflow_from_prompt(client):
+    # Without an upload the planner falls back to a valid text workflow.
+    response = client.post("/api/workflows/generate", json={"prompt": "Summarize a document and report the key points"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["validation"]["valid"] is True
+    types = [node["type"] for node in data["graph"]["nodes"]]
+    assert "llm" in types and "text_output" in types and "text_input" in types
+    saved = client.post("/api/workflows", json={"name": data["name"], "description": data["description"], "graph": data["graph"]})
+    assert saved.status_code == 201
+
+    # With an uploaded document the planner uses the file reader nodes.
+    client.post("/api/uploads", files={"file": ("brief.txt", b"notes", "text/plain")})
+    document = client.post("/api/workflows/generate", json={"prompt": "Summarize a document and report the key points"}).json()
+    document_types = [node["type"] for node in document["graph"]["nodes"]]
+    assert "file_input" in document_types and "file_reader" in document_types
+    assert document["validation"]["valid"] is True
+
+    text = client.post("/api/workflows/generate", json={"prompt": "Explain the idea of local-first AI"}).json()
+    assert "llm" in [node["type"] for node in text["graph"]["nodes"]]
+    assert text["validation"]["valid"] is True

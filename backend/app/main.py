@@ -25,6 +25,7 @@ from .api import dashboard as dashboard_api
 from .api import health as health_api
 from .api import knowledge as knowledge_api
 from .api import outputs as outputs_api
+from .api import projects as projects_api
 from .api import runtimes as runtimes_api
 from .api import settings as settings_api
 from .api import studios as studios_api
@@ -41,6 +42,8 @@ from .services.catalog import HuggingFaceCatalog
 from .services.chat import ChatService
 from .services.downloads import DownloadManager
 from .services.hardware import hardware_report
+from .services.projects import ProjectService
+from .services.coding import CodingService
 from .workflow_engine.executor import WorkflowEngine
 from .workflow_engine.templates import seed_templates
 
@@ -88,6 +91,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         agent_service = AgentService(db, runtimes, knowledge, settings, engine)
         chat_service = ChatService(db, runtimes)
         downloads = DownloadManager(db, settings)
+        projects = ProjectService(db, settings)
+        coding = CodingService(db, runtimes, projects, settings)
         seed_templates(db)
         _seed_default_agent(db)
         # Runs cannot survive a process restart; mark them interrupted instead of
@@ -104,6 +109,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "WHERE status = 'running'",
             (utc_now(),),
         )
+        db.execute(
+            "UPDATE project_tasks SET status = 'cancelled', finished_at = ?, "
+            "error = COALESCE(error, 'Interrupted: backend restarted before completion') "
+            "WHERE status = 'running'",
+            (utc_now(),),
+        )
 
         app.state.settings = settings
         app.state.db = db
@@ -113,6 +124,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.engine = engine
         app.state.agents = agent_service
         app.state.chat = chat_service
+        app.state.projects = projects
+        app.state.coding = coding
         app.state.catalog = HuggingFaceCatalog(settings)
         app.state.downloads = downloads
         app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
@@ -199,6 +212,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         health_api.router, dashboard_api.router, system_api.router, settings_api.router,
         chat_api.router, catalog_api.router, runtimes_api.router, workflows_api.router,
         agents_api.router, knowledge_api.router, studios_api.router, outputs_api.router,
+        projects_api.router,
     ):
         app.include_router(router, prefix="/api")
 

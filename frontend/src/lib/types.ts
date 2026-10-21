@@ -239,3 +239,32 @@ export interface ProviderInfo {
   id: string; name: string; kind: string; base_url: string; enabled: boolean;
   has_key: boolean; key_hint?: string | null; created_at: string;
 }
+
+export interface ProjectFileEntry { path: string; size: number; modified_at: number }
+export interface Checkpoint { id: string; project_id: string; label: string; task_id?: string | null; file_count: number; created_at: string }
+export interface ProjectTask {
+  id: string; project_id: string; kind: string; prompt: string; model_id?: string | null;
+  status: string; plan: Array<{ role: string; label: string }>; steps: Array<Record<string, unknown>>;
+  output?: string | null; error?: string | null; checkpoint_id?: string | null;
+  started_at: string; finished_at?: string | null;
+}
+export interface ProjectMemory {
+  id: string; project_id: string; kind: string; content: string; source?: string | null;
+  verified: boolean; created_at: string;
+}
+export interface Project {
+  id: string; name: string; description: string; kind: string; kind_label: string; path: string;
+  preview_entry?: string | null; status: string; metadata: Record<string, unknown>;
+  created_at: string; updated_at: string; task_count: number; last_task_at?: string | null;
+  files?: ProjectFileEntry[]; memory_count?: number; latest_checkpoint?: Checkpoint | null;
+}
+export interface ProjectDiffFile { path: string; status: string; diff: string }
+export interface ProjectDiff {
+  checkpoint: Checkpoint | null; files: ProjectDiffFile[]; truncated: boolean;
+  summary: { added: number; removed: number; changed: number };
+}
+export interface CommandResult {
+  id: string; command: string; args?: string[]; status: string; exit_code?: number | null;
+  stdout: string; stderr: string; duration_ms: number;
+}
+export interface ProjectKind { value: string; label: string }

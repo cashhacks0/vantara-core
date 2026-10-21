@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Copy, FileJson, Plus, Trash2, Workflow as WorkflowIcon } from 'lucide-react';
+import { ArrowRight, Copy, FileJson, Plus, Sparkles, Trash2, Wand2, Workflow as WorkflowIcon } from 'lucide-react';
 import { api, errorMessage } from '../lib/api';
 import type { Workflow, WorkflowGraph } from '../lib/types';
-import { Badge, Button, EmptyState, Modal, PageHeader, Panel, Skeleton, cn } from '../components/ui';
+import { Badge, Button, EmptyState, Field, Modal, PageHeader, Panel, Skeleton, Textarea, cn } from '../components/ui';
 import { relativeTime } from '../lib/format';
 import { toast } from '../lib/store';
 import { ScrollPage } from '../components/Layout';
@@ -18,6 +18,10 @@ export function WorkflowsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Workflow | null>(null);
   const [importGraph, setImportGraph] = useState<WorkflowGraph | null>(null);
   const [importName, setImportName] = useState('');
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [generatePrompt, setGeneratePrompt] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated] = useState<{ name: string; description: string; graph: WorkflowGraph; explanation: string[]; validation: { valid: boolean; errors: string[]; warnings: string[] } } | null>(null);
 
   const { data: workflows, isLoading } = useQuery({ queryKey: ['workflows'], queryFn: () => api<{ workflows: Workflow[] }>('/workflows'), select: (data) => data.workflows });
   const { data: templates } = useQuery({ queryKey: ['workflow-templates'], queryFn: () => api<{ templates: Template[] }>('/workflows/templates'), select: (data) => data.templates });
@@ -67,13 +71,35 @@ export function WorkflowsPage() {
     } catch (error) { toast.error('Import failed', errorMessage(error)); }
   }
 
+  async function generateWorkflow() {
+    if (!generatePrompt.trim()) return;
+    setGenerating(true);
+    setGenerated(null);
+    try {
+      setGenerated(await api('/workflows/generate', { method: 'POST', body: JSON.stringify({ prompt: generatePrompt }) }));
+    } catch (error) { toast.error('Could not generate workflow', errorMessage(error)); }
+    finally { setGenerating(false); }
+  }
+
+  async function saveGenerated() {
+    if (!generated) return;
+    try {
+      const workflow = await api<Workflow>('/workflows', { method: 'POST', body: JSON.stringify({ name: generated.name, description: generated.description, graph: generated.graph }) });
+      setGenerateOpen(false);
+      setGenerated(null);
+      setGeneratePrompt('');
+      void queryClient.invalidateQueries({ queryKey: ['workflows'] });
+      navigate(`/workflows/${workflow.id}`);
+    } catch (error) { toast.error('Could not save workflow', errorMessage(error)); }
+  }
+
   return (
     <ScrollPage>
       <PageHeader
         eyebrow="Executable graphs"
         title="Visual workflows"
         description="Compose typed nodes into directed acyclic graphs and execute them through local runtimes. Invalid graphs are rejected before anything runs."
-        actions={<><input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) importFile(file); event.target.value = ''; }} /><Button onClick={() => fileRef.current?.click()}><FileJson size={14} /> Import JSON</Button><Button variant="primary" onClick={() => void createFromTemplate()}><Plus size={14} /> New workflow</Button></>}
+        actions={<><input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) importFile(file); event.target.value = ''; }} /><Button onClick={() => fileRef.current?.click()}><FileJson size={14} /> Import JSON</Button><Button onClick={() => setGenerateOpen(true)}><Sparkles size={14} /> Generate from prompt</Button><Button variant="primary" onClick={() => void createFromTemplate()}><Plus size={14} /> New workflow</Button></>}
       />
 
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
@@ -124,6 +150,19 @@ export function WorkflowsPage() {
           </div>
         </div>
       </div>
+
+      <Modal open={generateOpen} onClose={() => { setGenerateOpen(false); setGenerated(null); }} size="lg" title="Generate workflow from a prompt" description="A capability-aware planner maps your request to validated, editable nodes. Nothing runs until you press Run." footer={<><Button variant="ghost" onClick={() => { setGenerateOpen(false); setGenerated(null); }}>Cancel</Button>{generated?.validation.valid && <Button variant="primary" onClick={() => void saveGenerated()}><Wand2 size={13} /> Save & open</Button>}</>}>
+        <div className="space-y-3">
+          <Field label="What should the workflow do?"><Textarea rows={3} value={generatePrompt} onChange={(event) => setGeneratePrompt(event.target.value)} placeholder="Summarize a document and save the result…" /></Field>
+          <Button variant="primary" onClick={() => void generateWorkflow()} loading={generating} disabled={!generatePrompt.trim()}><Sparkles size={13} /> Generate graph</Button>
+          {generated && <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5"><Badge tone={generated.validation.valid ? 'success' : 'danger'}>{generated.validation.valid ? 'valid graph' : 'needs fixes'}</Badge><Badge tone="neutral">{generated.graph.nodes.length} nodes</Badge><Badge tone="neutral">{generated.graph.edges.length} edges</Badge></div>
+            {generated.explanation.map((note) => <p key={note} className="rounded-md border border-lineSoft bg-ink-950/40 px-2.5 py-1.5 text-[10.5px] leading-relaxed text-muted">{note}</p>)}
+            {generated.validation.errors.map((error) => <p key={error} className="text-[10.5px] text-danger">{error}</p>)}
+            <pre className="max-h-48 overflow-auto rounded-lg border border-line bg-ink-950 p-2 text-[9px] text-faint">{JSON.stringify(generated.graph.nodes.map((node) => ({ type: node.type, config: node.config })), null, 2)}</pre>
+          </div>}
+        </div>
+      </Modal>
 
       <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Delete workflow" footer={<><Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button variant="danger" onClick={() => void removeWorkflow()}>Delete</Button></>}>
         <p className="text-[13px] text-muted">Delete “{deleteTarget?.name}”? Run history is retained.</p>

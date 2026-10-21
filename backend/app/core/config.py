@@ -36,6 +36,7 @@ class Settings:
     outputs_dir: Path
     cache_dir: Path
     logs_dir: Path
+    projects_dir: Path
     host: str = "127.0.0.1"
     port: int = 8756
     cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173")
@@ -84,6 +85,7 @@ class Settings:
             outputs_dir=_env_path("VANTARA_OUTPUTS_DIR", data_dir / "outputs"),
             cache_dir=_env_path("VANTARA_CACHE_DIR", data_dir / "cache"),
             logs_dir=_env_path("VANTARA_LOGS_DIR", data_dir / "logs"),
+            projects_dir=_env_path("VANTARA_PROJECTS_DIR", data_dir / "projects"),
             host=os.environ.get("VANTARA_HOST", "127.0.0.1"),
             port=int(os.environ.get("VANTARA_PORT", "8756")),
             cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip()),
@@ -115,6 +117,8 @@ class Settings:
             self.outputs_dir,
             self.cache_dir,
             self.logs_dir,
+            self.projects_dir,
+            self.projects_dir.parent / "checkpoints",
             self.models_dir / "gguf",
         ):
             path.mkdir(parents=True, exist_ok=True)

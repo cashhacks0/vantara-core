@@ -14,6 +14,9 @@ VANTARA does not impose application-level message quotas on supported local infe
 - **AI Agents** — bounded tool loops with calculator, uploaded-file reading, knowledge search, workflow execution, and approved output writing. Modifying tools require explicit human approval. No shell execution.
 - **Knowledge bases** — TXT/MD/PDF/DOCX ingestion, chunking, lexical retrieval, optional local embeddings, cited passages, RAG answers with source citations and visible extraction errors.
 - **Settings** — local runtime controls, privacy toggles, encrypted provider credentials, storage breakdown, logs, diagnostics, remote-provider opt-in.
+- **Creator Studio** — one-prompt project creation with inferred project type (website, playable browser game, Python, Node.js, blank).
+- **AI Terminal** — pick any installed local model, then build or edit **real files** in a project workspace: plan → generate → write → validate → checkpoint → diff. Includes a sandboxed live preview, project memory, task history, checkpoints with restore, and an allowlisted command runner.
+- **Workflow factory** — generate a validated, editable workflow graph from a plain-language request (document, knowledge, image, or text pipeline).
 
 See [`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) for the verified test matrix and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for module boundaries.
 
@@ -82,7 +85,7 @@ export HF_TOKEN=hf_...
 ## Testing
 
 ```bash
-# Backend: 46 tests (API, chat streaming, workflows, agents, knowledge, security)
+# Backend: 59 tests (API, chat streaming, workflows, agents, knowledge, security)
 cd backend && ../.venv/bin/python -m pytest -q
 
 # Frontend: type check, production build, unit + smoke-render tests
@@ -99,6 +102,7 @@ Copy `.env.example` to `.env`. Key variables:
 | --- | --- | --- |
 | `VANTARA_DATA_DIR` | SQLite DB, uploads, outputs, logs | `./data` |
 | `VANTARA_MODELS_DIR` | GGUF and model directories | `data/models` |
+| `VANTARA_PROJECTS_DIR` | Creator/AI Terminal project workspaces | `data/projects` |
 | `VANTARA_HOST` / `VANTARA_PORT` | API bind address | `127.0.0.1:8756` |
 | `VANTARA_LLAMA_SERVER` | llama-server binary path | `vendor/llama.cpp/llama-server` |
 | `VANTARA_LLAMA_CONTEXT` / `VANTARA_LLAMA_THREADS` | Default generation settings | `4096` / `4` |
@@ -156,6 +160,9 @@ data/                 local models, DB, uploads, outputs (ignored)
 - No authentication layer is included for network-exposed deployments.
 - The catalog browses the live Hub; availability and metadata depend on Hugging Face. The "10,000+ models" target refers to discoverable listings, not installed models.
 - Lexical retrieval is used when no embedding model is configured; results are labeled accordingly.
+- Project AI tasks are sequential (not parallel agents). Small local models can return weak code; VANTARA refuses to overwrite a file with unchanged or invalid output and reports validation honestly.
+- The AI Terminal command runner is allowlisted (`ls`, `git status/diff`, `node --check`, `python -m pytest`, `npm test`, …). Shell operators, absolute paths, installs, and network calls are rejected.
+- Previews render in a sandboxed iframe with `connect-src 'none'`, so generated pages cannot call the VANTARA API or read cookies.
 
 ## License and model usage
 

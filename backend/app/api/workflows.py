@@ -196,3 +196,101 @@ async def run_events(run_id: str, request: Request):
         stream(), media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+class GenerateRequest(BaseModel):
+    prompt: str = Field(min_length=3, max_length=4000)
+    kb_id: str | None = None
+
+
+@router.post("/workflows/generate")
+def generate_workflow(payload: GenerateRequest, request: Request):
+    """Map a natural-language request to a validated, runnable starter graph.
+
+    This is a deterministic capability-aware planner (not a fabricated model
+    claim).  It returns the graph plus the assumptions a user can inspect.
+    """
+    db = request.app.state.db
+    prompt = payload.prompt.strip()
+    lowered = prompt.lower()
+    notes: list[str] = []
+    nodes: list[dict[str, Any]] = []
+    edges: list[dict[str, Any]] = []
+
+    def add(node_id: str, node_type: str, x: int, config: dict[str, Any]) -> None:
+        nodes.append({"id": node_id, "type": node_type, "position": {"x": x, "y": 160}, "config": config})
+
+    def connect(a: str, b: str, source: str, target: str) -> None:
+        edges.append({"id": f"e{len(edges) + 1}", "source": a, "target": b, "sourceHandle": source, "targetHandle": target})
+
+    name = prompt.splitlines()[0][:80]
+    if any(word in lowered for word in ("file", "document", "pdf", "summar", "report")) and "knowledge" not in lowered:
+        uploads = sorted(request.app.state.settings.uploads_dir.glob("*")) if request.app.state.settings.uploads_dir.exists() else []
+        upload = uploads[-1].name if uploads else ""
+        if upload:
+            add("file", "file_input", 40, {"path": upload})
+            add("reader", "file_reader", 320, {"max_chars": 20000})
+            add("template", "prompt_template", 600, {"template": f"Task: {prompt}\n\nDocument:\n{{context}}"})
+            add("llm", "llm", 880, {"model": "auto", "temperature": 0.4, "max_tokens": 700, "system_prompt": "Summarize accurately and cite limitations from the supplied document."})
+            add("out", "text_output", 1160, {"label": "Document result"})
+            connect("file", "reader", "file", "file")
+            connect("reader", "template", "text", "context")
+            connect("template", "llm", "prompt", "prompt")
+            connect("llm", "out", "text", "text")
+            notes.append(f"Using the most recent upload: {upload}")
+        else:
+            add("input", "text_input", 40, {"text": "Paste the document text here, then run this workflow."})
+            add("template", "prompt_template", 340, {"template": f"Task: {prompt}\n\nDocument:\n{{input}}"})
+            add("llm", "llm", 640, {"model": "auto", "temperature": 0.4, "max_tokens": 700, "system_prompt": "Summarize accurately and cite limitations from the supplied document."})
+            add("out", "text_output", 940, {"label": "Document result"})
+            connect("input", "template", "text", "input")
+            connect("template", "llm", "prompt", "prompt")
+            connect("llm", "out", "text", "text")
+            notes.append("No uploaded file was found, so a valid Text Input workflow was generated instead. Upload a document and regenerate for a File Reader graph.")
+        kind = "document"
+    elif "knowledge" in lowered or "search" in lowered and "web" not in lowered:
+        kb_id = payload.kb_id
+        if not kb_id:
+            row = db.query_one("SELECT id FROM knowledge_bases ORDER BY updated_at DESC LIMIT 1")
+            kb_id = row["id"] if row else ""
+        add("input", "text_input", 40, {"text": "What are the key points in my knowledge base?"})
+        add("search", "vector_search", 320, {"kb_id": kb_id, "top_k": 6})
+        add("template", "prompt_template", 600, {"template": f"Task: {prompt}\n\nRetrieved context:\n{{context}}\n\nCite passages by their bracketed numbers."})
+        add("llm", "llm", 880, {"model": "auto", "temperature": 0.3, "max_tokens": 700, "system_prompt": "Answer only from the retrieved context and cite sources."})
+        add("out", "text_output", 1160, {"label": "Cited answer"})
+        connect("input", "search", "text", "query")
+        connect("search", "template", "text", "context")
+        connect("template", "llm", "prompt", "prompt")
+        connect("llm", "out", "text", "text")
+        notes.append("Using this knowledge base: " + kb_id if kb_id else "No knowledge base exists. Create one before running this graph.")
+        kind = "knowledge"
+    elif "image" in lowered or "photo" in lowered or "picture" in lowered:
+        images = [item for item in sorted(request.app.state.settings.uploads_dir.glob("*")) if item.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}] if request.app.state.settings.uploads_dir.exists() else []
+        image = images[-1].name if images else ""
+        add("image", "image_input", 40, {"path": image})
+        add("resize", "image_resize", 340, {"width": 1024, "height": 1024, "mode": "contain"})
+        add("out", "image_output", 640, {"name": "processed-image"})
+        connect("image", "resize", "image", "image")
+        connect("resize", "out", "image", "image")
+        notes.append("Select an uploaded image before running." if not image else f"Using the most recent image upload: {image}")
+        kind = "image"
+    else:
+        add("input", "text_input", 40, {"text": "Explain local-first AI in three concise sentences."})
+        add("template", "prompt_template", 340, {"template": f"Task: {prompt}\n\nInput:\n{{input}}"})
+        add("llm", "llm", 640, {"model": "auto", "temperature": 0.6, "max_tokens": 700, "system_prompt": "Follow the task and be precise. State uncertainty."})
+        add("out", "text_output", 940, {"label": "Result"})
+        connect("input", "template", "text", "input")
+        connect("template", "llm", "prompt", "prompt")
+        connect("llm", "out", "text", "text")
+        kind = "text"
+
+    graph = {"nodes": nodes, "edges": edges}
+    validation = request.app.state.engine.validate(graph)
+    if not validation["valid"]:
+        notes.extend(validation["errors"])
+    notes.append("Generated by VANTARA's capability-aware planner. Inspect and edit every node before running.")
+    return {
+        "name": name, "description": f"Generated {kind} workflow from: {prompt[:200]}",
+        "graph": graph, "explanation": notes, "validation": validation,
+        "kind": kind,
+    }

@@ -195,6 +195,69 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS projects (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT 'static',
+  path TEXT NOT NULL,
+  preview_entry TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  metadata_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_tasks (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  prompt TEXT NOT NULL,
+  model_id TEXT,
+  status TEXT NOT NULL DEFAULT 'running',
+  plan_json TEXT NOT NULL DEFAULT '[]',
+  steps_json TEXT NOT NULL DEFAULT '[]',
+  output TEXT,
+  error TEXT,
+  checkpoint_id TEXT,
+  started_at TEXT NOT NULL,
+  finished_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_tasks_project ON project_tasks(project_id, started_at DESC);
+
+CREATE TABLE IF NOT EXISTS project_memory (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'note',
+  content TEXT NOT NULL,
+  source TEXT,
+  verified INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_project_memory_project ON project_memory(project_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS project_checkpoints (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  task_id TEXT,
+  path TEXT NOT NULL,
+  file_count INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_commands (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  command TEXT NOT NULL,
+  status TEXT NOT NULL,
+  exit_code INTEGER,
+  stdout TEXT,
+  stderr TEXT,
+  started_at TEXT NOT NULL,
+  finished_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS providers (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,

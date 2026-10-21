@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
+import { CreatorStudioPage } from './pages/CreatorStudioPage';
+import { AITerminalPage } from './pages/AITerminalPage';
 import { ChatPage } from './pages/ChatPage';
 import { WorkflowsPage } from './pages/WorkflowsPage';
 import { WorkflowEditorPage } from './pages/WorkflowEditorPage';
@@ -19,6 +21,8 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="create" element={<CreatorStudioPage />} />
+        <Route path="terminal" element={<AITerminalPage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="chat/:conversationId" element={<ChatPage />} />
         <Route path="workflows" element={<WorkflowsPage />} />

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  AudioLines, Bot, BookOpen, ChevronLeft, ChevronRight, CircleHelp, HardDrive,
+  AudioLines, Bot, BookOpen, ChevronLeft, ChevronRight, CircleHelp, HardDrive, Wand2, TerminalSquare,
   History, Home, Image as ImageIcon, Library, Menu, MessageSquare, Settings,
   Video, Workflow, X, Activity, Download,
 } from 'lucide-react';
@@ -12,6 +12,8 @@ import { Toaster } from './Toaster';
 
 const NAV = [
   { to: '/', label: 'Home', icon: Home, end: true },
+  { to: '/create', label: 'Creator Studio', icon: Wand2 },
+  { to: '/terminal', label: 'AI Terminal', icon: TerminalSquare },
   { to: '/chat', label: 'VANTARA Chat', icon: MessageSquare },
   { to: '/workflows', label: 'Workflows', icon: Workflow },
   { to: '/models', label: 'Model Library', icon: Library },

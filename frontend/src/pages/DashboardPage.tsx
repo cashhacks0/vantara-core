@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowRight, Bot, Boxes, Cpu, Download, FileText, Gauge, HardDrive, Image as ImageIcon,
-  Library, MessageSquare, Plus, Shield, Sparkles, Workflow, Zap,
+  ArrowRight, Bot, Boxes, Cpu, Download, FileText, Gauge, HardDrive, Image as ImageIcon, TerminalSquare,
+  Library, MessageSquare, Shield, Sparkles, Workflow, Zap,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { DashboardData } from '../lib/types';
@@ -12,6 +12,7 @@ import { ScrollPage } from '../components/Layout';
 
 const QUICK_ACTIONS = [
   { to: '/chat', title: 'Start a chat', description: 'Talk to a local model with streaming responses.', icon: MessageSquare },
+  { to: '/terminal', title: 'Open AI Terminal', description: 'Build and fix real project files with a local model.', icon: TerminalSquare },
   { to: '/workflows', title: 'Create a workflow', description: 'Compose executable AI pipelines visually.', icon: Workflow },
   { to: '/models', title: 'Browse models', description: 'Search the real Hugging Face catalog.', icon: Library },
   { to: '/local-models', title: 'Install a local model', description: 'Detect runtimes and manage GGUF files.', icon: HardDrive },
@@ -37,7 +38,7 @@ export function DashboardPage() {
         eyebrow="Local-first AI operating environment"
         title="Your private AI workspace"
         description="Run open models, build executable workflows, and keep your data on this machine — unless you explicitly choose a remote provider."
-        actions={<><Link to="/chat"><Button variant="primary"><Plus size={14} /> New chat</Button></Link><Link to="/workflows"><Button><Workflow size={14} /> New workflow</Button></Link></>}
+        actions={<><Link to="/create"><Button variant="primary"><Sparkles size={14} /> Create with AI</Button></Link><Link to="/terminal"><Button><TerminalSquare size={14} /> AI Terminal</Button></Link></>}
       />
 
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
