@@ -17,6 +17,7 @@ VANTARA does not impose application-level message quotas on supported local infe
 - **Creator Studio** — one-prompt project creation with inferred project type (website, playable browser game, Python, Node.js, blank).
 - **AI Terminal** — pick any installed local model, then build or edit **real files** in a project workspace: plan → generate → write → validate → checkpoint → diff. Includes a sandboxed live preview, project memory, task history, checkpoints with restore, and an allowlisted command runner.
 - **Workflow factory** — generate a validated, editable workflow graph from a plain-language request (document, knowledge, image, or text pipeline).
+- **Game Editor (Phase 1)** — a browser-based 3D editor: Projects page, Unreal-style shell (toolbar, outliner, 3D viewport, details panel, content browser), transform gizmos with snapping, multi-select and duplicate, 50-step undo/redo, a versioned JSON "game spec" validated with zod, IndexedDB storage in your browser, and zip export/import so you own your games. The AI assistant is docked on the right and already answers questions about your scene with a local model.
 
 See [`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) for the verified test matrix and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for module boundaries.
 

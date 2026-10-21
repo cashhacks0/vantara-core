@@ -3,6 +3,9 @@ import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { CreatorStudioPage } from './pages/CreatorStudioPage';
 import { AITerminalPage } from './pages/AITerminalPage';
+import { ProjectsPage } from './pages/ProjectsPage';
+import { GameEditorPage } from './pages/GameEditorPage';
+import { PublishPage } from './pages/PublishPage';
 import { ChatPage } from './pages/ChatPage';
 import { WorkflowsPage } from './pages/WorkflowsPage';
 import { WorkflowEditorPage } from './pages/WorkflowEditorPage';
@@ -22,6 +25,10 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<DashboardPage />} />
         <Route path="create" element={<CreatorStudioPage />} />
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="editor/:projectId" element={<GameEditorPage />} />
+        <Route path="editor" element={<GameEditorPage />} />
+        <Route path="publish" element={<PublishPage />} />
         <Route path="terminal" element={<AITerminalPage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="chat/:conversationId" element={<ChatPage />} />

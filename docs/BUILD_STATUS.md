@@ -38,7 +38,7 @@ Version: 0.1.0
 
 ```text
 backend: 59 passed  (pytest)
-frontend: 7 passed  (vitest, includes dashboard + AI Terminal smoke renders)
+frontend: 21 passed  (vitest, includes dashboard, AI Terminal and game editor shell tests)
 frontend build: successful
 typescript strict check: successful
 ```
@@ -77,9 +77,36 @@ GET  / (built SPA) → 200 text/html; JS asset 200
 12. Model cards are rendered from README text; embedded HTML is sanitized by React Markdown defaults (no raw HTML).
 13. Image Studio exposes batch size = 1 in this release; sequential multi-image batching is not wired yet.
 
+## Phase 1 — Game Editor shell (browser 3D)
+
+| Feature | Status | Verification |
+| --- | --- | --- |
+| Projects page | ✅ | Create / open / rename / duplicate / delete / import / export — headless test + live route check |
+| Editor layout | ✅ | Toolbar, Outliner, viewport, Details/AI right dock, Content Browser, resizable panels |
+| 3D viewport | ✅ (code) | React Three Fiber canvas: grid, sky colour, scene lights, shadows, tone mapping + bloom |
+| Transform gizmo | ✅ (code) | Move / rotate / scale with snapping, live transform, commit on release |
+| Outliner | ✅ | Rename (double-click), show/hide, lock, duplicate, delete, multi-select |
+| Details panel | ✅ | Transform numbers, material (colour / roughness / metalness), visibility, lock |
+| Content Browser | ✅ | Primitives and lights, click to add or drag into the viewport |
+| Undo / redo | ✅ | 50-step history, Ctrl+Z / Ctrl+Shift+Z — automated test |
+| Typed game spec | ✅ | zod schema, versioned, validated on every load/save/AI change — 5 automated tests |
+| Storage | ✅ | IndexedDB (idb) with zip export/import (fflate) — round-trip test |
+| AI assistant dock | ✅ | Real local-model chat about the current scene (scene commands land in Phase 2) |
+| Play mode | ⛔ | Phase 3 — button is disabled and labelled, not simulated |
+| AI scene commands | ⛔ | Phase 2 |
+| Physics (Rapier) | ⛔ | Phase 3 — values are stored now, labelled in the panel |
+| Asset import / post stack | ⛔ | Phase 4 |
+| Web publishing | ⛔ | Phase 7 — Publish page exports a real zip today and states the plan honestly |
+
+**Verification note (honest):** this sandbox has no GPU, no browser and no root access to install
+Chromium's system libraries, so the WebGL viewport could not be rendered here. It is covered by a
+clean TypeScript build, a production bundle that includes the new routes, and a headless editor
+test that exercises the real toolbar / outliner / details / content browser around a stubbed
+canvas. **Please open the editor in a real browser to confirm the 3D view renders** (see below).
+
 ## Next concrete development step
 
-Per the new upgrade directive, the next step is **Phase 1 of the browser-based AI game engine**: a Projects page, a React Three Fiber editor shell (toolbar, outliner, 3D viewport, details panel, content browser), a typed JSON "game spec" with undo/redo, and IndexedDB project storage. A Diffusers image runtime adapter remains queued after that.
+Per the new upgrade directive, the next step is **Phase 2 of the browser-based AI game engine**: a Projects page, a React Three Fiber editor shell (toolbar, outliner, 3D viewport, details panel, content browser), a typed JSON "game spec" with undo/redo, and IndexedDB project storage. A Diffusers image runtime adapter remains queued after that.
 
 Add a **Diffusers image runtime adapter** with capability discovery, a model-directory picker, real progress callbacks, image-to-image support, and tests using a tiny local pipeline stub. This would make Image Studio and the `image_model` workflow node functional on GPU and CPU, and complete the second example workflow without relying on the resize-only fallback.
 
