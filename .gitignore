@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/.pytest_cache/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/node_modules/
+*.tsbuildinfo
+
+# Local runtime data (models, uploads, outputs, DB, logs, keys)
+data/
+!data/.gitkeep
+vendor/llama.cpp/
+*.log
+
+# Environment
+.env
+.env.local
+.DS_Store
