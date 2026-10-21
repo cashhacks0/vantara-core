@@ -96,3 +96,12 @@ def test_edit_and_resend_truncates_following_messages(client, fake_runtime):
     assert [message["role"] for message in updated["messages"]] == ["user", "assistant"]
     assert updated["messages"][0]["content"] == "Edited prompt"
     assert updated["messages"][1]["status"] == "complete"
+
+
+def test_image_upload_has_no_false_extraction_error(client):
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+    response = client.post("/api/uploads", files={"file": ("picture.png", png, "image/png")})
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["extraction_error"] is None
+    assert payload["extracted_text"] is None

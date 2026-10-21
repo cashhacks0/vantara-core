@@ -30,8 +30,8 @@ Version: 0.1.0
 ## Test matrix (executed)
 
 ```text
-backend: 44 passed  (pytest)
-frontend: 5 passed  (vitest)
+backend: 45 passed  (pytest)
+frontend: 6 passed  (vitest, includes dashboard smoke render)
 frontend build: successful
 typescript strict check: successful
 ```

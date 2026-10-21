@@ -82,10 +82,10 @@ export HF_TOKEN=hf_...
 ## Testing
 
 ```bash
-# Backend: 44 tests (API, chat streaming, workflows, agents, knowledge, security)
+# Backend: 45 tests (API, chat streaming, workflows, agents, knowledge, security)
 cd backend && ../.venv/bin/python -m pytest -q
 
-# Frontend: type check, production build, unit tests
+# Frontend: type check, production build, unit + smoke-render tests
 cd frontend && npx tsc -b && npm run build && npx vitest run
 ```
 

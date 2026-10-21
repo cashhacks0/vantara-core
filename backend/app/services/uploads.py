@@ -27,10 +27,16 @@ async def save_upload(file: UploadFile, uploads_dir: Path, max_bytes: int = MAX_
     target.write_bytes(data)
     extracted_text = None
     extraction_error = None
-    try:
-        extracted_text = extract_text(target)[:16000]
-    except ValueError as exc:
-        extraction_error = str(exc)[:300]
+    document_suffixes = {
+        ".txt", ".md", ".markdown", ".csv", ".json", ".log", ".py", ".ts", ".tsx",
+        ".js", ".jsx", ".html", ".css", ".yaml", ".yml", ".toml", ".ini", ".sql",
+        ".pdf", ".docx",
+    }
+    if target.suffix.lower() in document_suffixes:
+        try:
+            extracted_text = extract_text(target)[:16000]
+        except ValueError as exc:
+            extraction_error = str(exc)[:300]
     return {
         "name": original_name,
         "stored_name": stored_name,
