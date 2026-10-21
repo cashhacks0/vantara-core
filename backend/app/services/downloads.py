@@ -322,5 +322,3 @@ class DownloadManager:
                 raise DownloadError(f"Could not delete model file: {exc}") from exc
         self.db.execute("DELETE FROM installed_models WHERE id = ?", (model_id,))
         self.db.audit("model.removed", f"{row['repo_id']}/{row['filename']}")
-
-        return result

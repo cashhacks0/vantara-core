@@ -65,6 +65,7 @@ def validate_graph(graph: dict[str, Any]) -> tuple[list[str], list[str]]:
         if source == target:
             errors.append(f"Node '{source}' cannot connect to itself.")
             continue
+        incoming[target].append(source)
         source_node = NODE_REGISTRY.get(by_id[source].get("type"))
         target_node = NODE_REGISTRY.get(by_id[target].get("type"))
         if not source_node or not target_node:
@@ -85,7 +86,6 @@ def validate_graph(graph: dict[str, Any]) -> tuple[list[str], list[str]]:
         if key in target_ports:
             warnings.append(f"Multiple connections target {target_node.spec.label} input '{target_port}'; the last value wins.")
         target_ports.add(key)
-        incoming[target].append(source)
     for node in nodes:
         node_type = node.get("type")
         instance = NODE_REGISTRY.get(node_type)

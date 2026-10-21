@@ -1,0 +1,17 @@
+# Optional backends. Install only the ones you need; they are large.
+# Local image generation:
+#   torch --index-url https://download.pytorch.org/whl/cpu
+#   diffusers
+#   accelerate
+#   safetensors
+#
+# Transformers text generation:
+#   torch
+#   transformers
+#   accelerate
+#
+# Local speech recognition:
+#   faster-whisper
+#
+# llama-cpp-python is NOT required: VANTARA manages a llama-server binary over
+# its OpenAI-compatible HTTP API. Use VANTARA_LLAMA_SERVER to point at one.

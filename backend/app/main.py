@@ -89,6 +89,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         downloads = DownloadManager(db, settings)
         seed_templates(db)
         _seed_default_agent(db)
+        # Runs cannot survive a process restart; mark them interrupted instead of
+        # leaving permanently "running" rows in history.
+        db.execute(
+            "UPDATE workflow_runs SET status = 'failed', finished_at = ?, "
+            "error = COALESCE(error, 'Interrupted: backend restarted before completion') "
+            "WHERE status = 'running'",
+            (utc_now(),),
+        )
+        db.execute(
+            "UPDATE agent_runs SET status = 'failed', finished_at = ?, "
+            "error = COALESCE(error, 'Interrupted: backend restarted before completion') "
+            "WHERE status = 'running'",
+            (utc_now(),),
+        )
 
         app.state.settings = settings
         app.state.db = db
