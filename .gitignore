@@ -1,0 +1,13 @@
+.cline-home/
+backend/.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+frontend/dist/
+*.db
+*.db-journal
+*.gguf
+*.part
+.env
+data/*
+!data/.gitkeep
